@@ -1,37 +1,29 @@
 # Virtual Environment
 venv/
 
-# Python cache
+# Python
 __pycache__/
-*.py[cod]
+*.pyc
+
+# TensorFlow
+*.h5
+*.keras
+
+# Dataset
+dataset/
 
 # Jupyter
 .ipynb_checkpoints/
 
-# Environment variables
-.env
-
-# Uploaded images
-uploads/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# IDE settings
+# VS Code
 .vscode/
 
 # Logs
-*.log
+logs/
 
-# Build files
-build/
-dist/
+# Models
+models/
 
-# Model checkpoints (optional)
-models/*.h5
-models/*.keras
-
-# Temporary files
-*.tmp
-*.bak
+# OS Files
+.DS_Store
+Thumbs.db
