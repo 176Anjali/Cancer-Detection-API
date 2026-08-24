@@ -1,21 +1,30 @@
 import os
 import sys
+import tensorflow as tf
 
-# Add project root to Python path
+# -------------------------------------------------------
+# Add Project Root
+# -------------------------------------------------------
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
 
-import tensorflow as tf
 from configs.config import IMAGE_SIZE, BATCH_SIZE, SEED
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# -------------------------------------------------------
+# Dataset Paths
+# -------------------------------------------------------
 
 TRAIN_DIR = os.path.join(BASE_DIR, "dataset", "train")
 VAL_DIR = os.path.join(BASE_DIR, "dataset", "validation")
 TEST_DIR = os.path.join(BASE_DIR, "dataset", "test")
 
+# -------------------------------------------------------
+# Dataset Loader
+# -------------------------------------------------------
 
 def load_dataset(path, shuffle=False):
+
     return tf.keras.utils.image_dataset_from_directory(
         path,
         image_size=IMAGE_SIZE,
@@ -26,29 +35,46 @@ def load_dataset(path, shuffle=False):
     )
 
 
-train_ds = load_dataset(TRAIN_DIR, shuffle=True)
-val_ds = load_dataset(VAL_DIR)
-test_ds = load_dataset(TEST_DIR)
+# -------------------------------------------------------
+# Main Loader Function
+# -------------------------------------------------------
 
-# Save class names before mapping
-CLASS_NAMES = train_ds.class_names
+def load_datasets():
 
-# Normalize images
-normalizer = tf.keras.layers.Rescaling(1.0 / 255)
+    train_ds = load_dataset(TRAIN_DIR, shuffle=True)
 
-train_ds = train_ds.map(lambda x, y: (normalizer(x), y))
-val_ds = val_ds.map(lambda x, y: (normalizer(x), y))
-test_ds = test_ds.map(lambda x, y: (normalizer(x), y))
+    val_ds = load_dataset(VAL_DIR)
 
-AUTOTUNE = tf.data.AUTOTUNE
+    test_ds = load_dataset(TEST_DIR)
 
-train_ds = train_ds.prefetch(AUTOTUNE)
-val_ds = val_ds.prefetch(AUTOTUNE)
-test_ds = test_ds.prefetch(AUTOTUNE)
+    class_names = train_ds.class_names
 
-print("\nDatasets Loaded Successfully")
-print("Classes:", CLASS_NAMES)
+    normalizer = tf.keras.layers.Rescaling(1.0 / 255)
 
-for images, labels in train_ds.take(1):
-    print("Images Shape :", images.shape)
-    print("Labels Shape :", labels.shape)
+    train_ds = train_ds.map(lambda x, y: (normalizer(x), y))
+    val_ds = val_ds.map(lambda x, y: (normalizer(x), y))
+    test_ds = test_ds.map(lambda x, y: (normalizer(x), y))
+
+    AUTOTUNE = tf.data.AUTOTUNE
+
+    train_ds = train_ds.prefetch(AUTOTUNE)
+    val_ds = val_ds.prefetch(AUTOTUNE)
+    test_ds = test_ds.prefetch(AUTOTUNE)
+
+    return train_ds, val_ds, test_ds, class_names
+
+
+# -------------------------------------------------------
+# Test Loader
+# -------------------------------------------------------
+
+if __name__ == "__main__":
+
+    train_ds, val_ds, test_ds, class_names = load_datasets()
+
+    print("\nDatasets Loaded Successfully")
+    print("Classes:", class_names)
+
+    for images, labels in train_ds.take(1):
+        print("Images Shape :", images.shape)
+        print("Labels Shape :", labels.shape)
