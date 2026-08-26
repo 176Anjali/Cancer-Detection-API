@@ -1,3 +1,0 @@
-METRICS = [
-    "accuracy"
-]

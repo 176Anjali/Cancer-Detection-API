@@ -28,3 +28,5 @@ models/
 
 .DS_Store
 Thumbs.db
+
+.history/
