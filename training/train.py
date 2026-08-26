@@ -76,6 +76,9 @@ history = model.fit(
 
 )
 
+print("\nFinal Training Accuracy :", history.history["accuracy"][-1])
+print("Final Validation Accuracy :", history.history["val_accuracy"][-1])
+
 # -------------------------------------------------
 # Save Final Model
 # -------------------------------------------------
