@@ -1,0 +1,74 @@
+name: Update CIAO documentation
+
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - 'CIAO-system/arc42_documentation.txt'
+      - 'CIAO-system/full_code.txt'
+      - 'CIAO-system/architecture.mmd'
+      - 'CIAO-system/architecture.svg'
+      - 'CIAO-system/output/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ciao-docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      OLLAMA_MODEL: llama3.2:3b
+      OLLAMA_CONTEXT_SIZE: '8192'
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install CIAO dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install aiofiles tiktoken ollama
+          npm install --global repomix @mermaid-js/mermaid-cli
+
+      - name: Start Ollama and load the model
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          if ! sudo systemctl start ollama; then
+            ollama serve > /tmp/ollama.log 2>&1 &
+          fi
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://localhost:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          curl -fsS http://localhost:11434/api/tags >/dev/null
+          ollama pull "$OLLAMA_MODEL"
+
+      - name: Generate documentation and diagram
+        run: |
+          python CIAO-system/main.py .
+          mkdir -p docs
+          python CIAO-system/render_architecture.py CIAO-system/architecture.mmd docs/architecture.svg
+          cp CIAO-system/arc42_documentation.txt docs/architecture.md
+          cp CIAO-system/architecture.mmd docs/architecture.mmd
+
+      - name: Commit updated documentation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/architecture.md docs/architecture.svg docs/architecture.mmd
+          if git diff --cached --quiet; then
+            echo "Documentation is already up to date."
+          else
+            git commit -m "docs: update CIAO architecture documentation"
+            git push
+          fi
