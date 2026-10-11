@@ -26,6 +26,7 @@ jobs:
       CIAO_DOCUMENT_FORMAT: ${{ vars.CIAO_DOCUMENT_FORMAT || 'pdf' }}
       CIAO_IMAGE_FORMAT: ${{ vars.CIAO_IMAGE_FORMAT || 'png' }}
       OLLAMA_MODEL: ${{ vars.CIAO_OLLAMA_MODEL || 'llama3.2:3b' }}
+      CIAO_OLLAMA_NUM_PREDICT: ${{ vars.CIAO_OLLAMA_NUM_PREDICT || '2048' }}
       OLLAMA_HOST: http://127.0.0.1:11434
 
     steps:
@@ -38,7 +39,7 @@ jobs:
       - name: Check out CIAO generator
         uses: actions/checkout@v4
         with:
-          repository: 176Anjali/CIAO-demo
+          repository: 176Anjali/CIAO-Code-In-Architecture-Out-main
           ref: main
           path: ciao-engine
           persist-credentials: false

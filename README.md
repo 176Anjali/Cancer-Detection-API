@@ -10,7 +10,7 @@ This repository can automatically generate a project documentation report and an
 
 1. In GitHub, open **Settings → Actions → General** and make sure Actions are enabled.
 2. Under **Workflow permissions**, select **Read and write permissions**, then save. The workflow requests `contents: write` so it can commit the generated files.
-3. Confirm that `.github/workflows/update-ciao-docs.yml` is present on GitHub (it is included in this setup). The workflow uses CIAO from `176Anjali/CIAO-demo` and runs Ollama on the GitHub Actions runner; you do not need to install Ollama or Docker on your computer for GitHub sync.
+3. Confirm that `.github/workflows/update-ciao-docs.yml` is present on GitHub (it is included in this setup). The workflow uses CIAO from `176Anjali/CIAO-Code-In-Architecture-Out-main` and runs Ollama on the GitHub Actions runner; you do not need to install Ollama or Docker on your computer for GitHub sync.
 4. Push a source-code change, or open **Actions → Update CIAO documentation → Run workflow** to start it manually.
 5. Watch the run under **Actions → Update CIAO documentation**. The first run can take longer while the runner installs Ollama and downloads the model. On success, download `documentation.pdf` and `architecture.png` from the repository root.
 
@@ -25,6 +25,7 @@ In **Settings → Secrets and variables → Actions → Variables**, add any of 
 | `CIAO_DOCUMENT_FORMAT` | `pdf`, `docx` | `pdf` |
 | `CIAO_IMAGE_FORMAT` | `png`, `svg` | `png` |
 | `CIAO_OLLAMA_MODEL` | Any model available to Ollama | `llama3.2:3b` |
+| `CIAO_OLLAMA_NUM_PREDICT` | Positive token count | `2048` |
 
 The selected report and diagram format are committed to the repository root. The workflow checks out the exact source commit that triggered generation.
 
@@ -38,4 +39,3 @@ Install the Python packages listed in `requirements.txt`, then follow the applic
 - `configs/` and `models/` contain configuration and model assets.
 - `dataset/` contains project data.
 - `tests/` contains automated checks.
-
