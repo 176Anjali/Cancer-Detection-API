@@ -1,0 +1,104 @@
+name: Update CIAO documentation
+
+on:
+  push:
+    branches: ["**"]
+    paths-ignore:
+      - "documentation.pdf"
+      - "documentation.docx"
+      - "architecture.png"
+      - "architecture.svg"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ciao-docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    if: ${{ !contains(github.event.head_commit.message || '', '[ciao-generated]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CIAO_DOCUMENT_FORMAT: ${{ vars.CIAO_DOCUMENT_FORMAT || 'pdf' }}
+      CIAO_IMAGE_FORMAT: ${{ vars.CIAO_IMAGE_FORMAT || 'png' }}
+      OLLAMA_MODEL: ${{ vars.CIAO_OLLAMA_MODEL || 'llama3.2:3b' }}
+      OLLAMA_HOST: http://127.0.0.1:11434
+
+    steps:
+      - name: Check out the project commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Check out CIAO generator
+        uses: actions/checkout@v4
+        with:
+          repository: 176Anjali/CIAO-demo
+          ref: main
+          path: ciao-engine
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install CIAO dependencies
+        run: python -m pip install -r ciao-engine/requirements.txt
+
+      - name: Install and start Ollama
+        shell: bash
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          (ollama serve > "$RUNNER_TEMP/ollama.log" 2>&1 &)
+          for attempt in {1..60}; do
+            if curl --silent --fail http://127.0.0.1:11434/api/tags >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          curl --silent --show-error --fail http://127.0.0.1:11434/api/tags >/dev/null
+          ollama pull "$OLLAMA_MODEL"
+
+      - name: Generate and validate documentation and diagram
+        shell: bash
+        run: |
+          python ciao-engine/scripts/ciao_sync.py \
+            --repo "$GITHUB_WORKSPACE" \
+            --branch "$GITHUB_REF_NAME" \
+            --commit-sha "$GITHUB_SHA" \
+            --document-format "$CIAO_DOCUMENT_FORMAT" \
+            --image-format "$CIAO_IMAGE_FORMAT" \
+            --output-dir "$RUNNER_TEMP/ciao-output"
+          test -s "$RUNNER_TEMP/ciao-output/documentation.$CIAO_DOCUMENT_FORMAT"
+          test -s "$RUNNER_TEMP/ciao-output/architecture.$CIAO_IMAGE_FORMAT"
+
+      - name: Commit generated files to the project
+        shell: bash
+        run: |
+          cp "$RUNNER_TEMP/ciao-output/documentation.$CIAO_DOCUMENT_FORMAT" .
+          cp "$RUNNER_TEMP/ciao-output/architecture.$CIAO_IMAGE_FORMAT" .
+          if [ "$CIAO_DOCUMENT_FORMAT" = "pdf" ]; then
+            git rm --ignore-unmatch documentation.docx
+          else
+            git rm --ignore-unmatch documentation.pdf
+          fi
+          if [ "$CIAO_IMAGE_FORMAT" = "png" ]; then
+            git rm --ignore-unmatch architecture.svg
+          else
+            git rm --ignore-unmatch architecture.png
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "documentation.$CIAO_DOCUMENT_FORMAT" "architecture.$CIAO_IMAGE_FORMAT"
+          if git diff --cached --quiet; then
+            echo "Generated documentation and architecture are already up to date."
+          else
+            git commit -m "docs: refresh CIAO outputs [ciao-generated]"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
