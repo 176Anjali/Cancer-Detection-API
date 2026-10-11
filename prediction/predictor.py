@@ -1,4 +1,3 @@
-import os
 import sys
 import numpy as np
 import tensorflow as tf
@@ -13,16 +12,8 @@ sys.path.insert(0, BASE_DIR)
 from prediction.preprocess import preprocess_image
 from prediction.labels import get_prediction
 
-# -------------------------------------------------------
-# Model Path
-# -------------------------------------------------------
+from configs.config import MODEL_PATH
 
-MODEL_PATH = os.path.join(
-    BASE_DIR,
-    "models",
-    "final",
-    "leukemia_classifier.keras"
-)
 
 # -------------------------------------------------------
 # Load Model

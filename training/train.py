@@ -25,7 +25,7 @@ from configs.config import (
 # Create folders
 # -------------------------------------------------
 
-os.makedirs("models/final", exist_ok=True)
+os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
 os.makedirs("models/history", exist_ok=True)
 
 # -------------------------------------------------

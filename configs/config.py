@@ -1,3 +1,7 @@
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 IMAGE_SIZE = (224, 224)
 
 BATCH_SIZE = 32
@@ -12,4 +16,4 @@ SEED = 42
 
 MODEL_NAME = "MobileNetV2"
 
-MODEL_PATH = "models/leukemia_classifier.keras"
+MODEL_PATH = os.path.join(BASE_DIR, "models", "final", "leukemia_classifier.keras")
